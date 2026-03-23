@@ -1,4 +1,6 @@
-﻿using Nop.Core.Caching;
+using Nop.Core.Caching;
+using System.Diagnostics;
+using Nop.Services;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
@@ -340,76 +342,82 @@ public partial class PriceCalculationService : IPriceCalculationService
         DateTime? rentalStartDate,
         DateTime? rentalEndDate)
     {
-        ArgumentNullException.ThrowIfNull(product);
-
-        var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopCatalogDefaults.ProductPriceCacheKey,
-            product,
-            overriddenProductPrice,
-            additionalCharge,
-            includeDiscounts,
-            quantity,
-            await _customerService.GetCustomerRoleIdsAsync(customer),
-            store);
-
-        //we do not cache price if this not allowed by settings or if the product is rental product
-        //otherwise, it can cause memory leaks (to store all possible date period combinations)
-        if (!_catalogSettings.CacheProductPrices || product.IsRental)
-            cacheKey.CacheTime = 0;
-
-        decimal rezPrice;
-        decimal rezPriceWithoutDiscount;
-        decimal discountAmount;
-        List<Discount> appliedDiscounts;
-
-        (rezPriceWithoutDiscount, rezPrice, discountAmount, appliedDiscounts) = await _staticCacheManager.GetAsync(cacheKey, async () =>
+        using var activity = NopTelemetry.Source.StartActivity("GetFinalPriceAsync");
+        activity?.SetTag("product.id", product.Id);
+        
+        try 
         {
-            var discounts = new List<Discount>();
-            var appliedDiscountAmount = decimal.Zero;
+            ArgumentNullException.ThrowIfNull(product);
 
-            //initial price
-            var price = overriddenProductPrice ?? product.Price;
+            var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopCatalogDefaults.ProductPriceCacheKey,
+                product,
+                overriddenProductPrice,
+                additionalCharge,
+                includeDiscounts,
+                quantity,
+                await _customerService.GetCustomerRoleIdsAsync(customer),
+                store);
 
-            //tier prices
-            var tierPrice = await _productService.GetPreferredTierPriceAsync(product, customer, store, quantity);
+            if (!_catalogSettings.CacheProductPrices || product.IsRental)
+                cacheKey.CacheTime = 0;
 
-            if (tierPrice != null)
-                price = tierPrice.Price;
-
-            //additional charge
-            price += additionalCharge;
-
-            //rental products
-            if (product.IsRental)
+            var isMiss = false;
+            var (rezPriceWithoutDiscount, rezPrice, discountAmount, appliedDiscounts) = await _staticCacheManager.GetAsync(cacheKey, async () =>
             {
-                if (rentalStartDate.HasValue && rentalEndDate.HasValue)
-                    price *= _productService.GetRentalPeriods(product, rentalStartDate.Value, rentalEndDate.Value);
-            }
+                isMiss = true;
+                NopTelemetry.ProductCacheMisses.Add(1, new KeyValuePair<string, object>("product.id", product.Id));
+                var discounts = new List<Discount>();
+                var appliedDiscountAmount = decimal.Zero;
 
-            var priceWithoutDiscount = price;
+                var price = overriddenProductPrice ?? product.Price;
+                var tierPrice = await _productService.GetPreferredTierPriceAsync(product, customer, store, quantity);
 
-            if (includeDiscounts)
-            {
-                //discount
-                var (tmpDiscountAmount, tmpAppliedDiscounts) = await GetDiscountAmountAsync(product, customer, price);
-                price -= tmpDiscountAmount;
+                if (tierPrice != null)
+                    price = tierPrice.Price;
 
-                if (tmpAppliedDiscounts?.Any() ?? false)
+                price += additionalCharge;
+
+                if (product.IsRental)
                 {
-                    discounts.AddRange(tmpAppliedDiscounts);
-                    appliedDiscountAmount = tmpDiscountAmount;
+                    if (rentalStartDate.HasValue && rentalEndDate.HasValue)
+                        price *= _productService.GetRentalPeriods(product, rentalStartDate.Value, rentalEndDate.Value);
                 }
+
+                var priceWithoutDiscount = price;
+
+                if (includeDiscounts)
+                {
+                    var (tmpDiscountAmount, tmpAppliedDiscounts) = await GetDiscountAmountAsync(product, customer, price);
+                    price -= tmpDiscountAmount;
+
+                    if (tmpAppliedDiscounts?.Any() ?? false)
+                    {
+                        discounts.AddRange(tmpAppliedDiscounts);
+                        appliedDiscountAmount = tmpDiscountAmount;
+                    }
+                }
+
+                if (price < decimal.Zero)
+                    price = decimal.Zero;
+
+                if (priceWithoutDiscount < decimal.Zero)
+                    priceWithoutDiscount = decimal.Zero;
+
+                return (priceWithoutDiscount, price, appliedDiscountAmount, discounts);
+            });
+
+            if (!isMiss)
+            {
+                NopTelemetry.ProductCacheHits.Add(1, new KeyValuePair<string, object>("product.id", product.Id));
             }
 
-            if (price < decimal.Zero)
-                price = decimal.Zero;
-
-            if (priceWithoutDiscount < decimal.Zero)
-                priceWithoutDiscount = decimal.Zero;
-
-            return (priceWithoutDiscount, price, appliedDiscountAmount, discounts);
-        });
-
-        return (rezPriceWithoutDiscount, rezPrice, discountAmount, appliedDiscounts);
+            return (rezPriceWithoutDiscount, rezPrice, discountAmount, appliedDiscounts);
+        }
+        catch (Exception ex)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            throw;
+        }
     }
 
     /// <summary>

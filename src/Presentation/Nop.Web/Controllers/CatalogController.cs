@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 using Nop.Core;
+using Nop.Services;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.FilterLevels;
 using Nop.Core.Domain.Media;
@@ -360,6 +362,9 @@ public partial class CatalogController : BasePublicController
     [SaveLastContinueShoppingPage]
     public virtual async Task<IActionResult> Search(SearchModel model, CatalogProductsCommand command)
     {
+        using var activity = NopTelemetry.Source.StartActivity("Search");
+        activity?.SetTag("search.keywords", model?.q);
+
         if (model == null)
             model = new SearchModel();
 
