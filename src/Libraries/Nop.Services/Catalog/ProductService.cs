@@ -558,17 +558,16 @@ public partial class ProductService : IProductService
 
         try 
         {
-            // Simple cache instrumentation
-            var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopCatalogDefaults.ProductCategoriesByProductCacheKey, productId, false, 0, 0);
-            bool isMiss = false;
-            var product = await _productRepository.GetByIdAsync(productId, cache => 
-            {
-                isMiss = true;
-                return default;
-            });
-            
-            if (isMiss) NopTelemetry.ProductCacheMisses.Add(1);
-            else NopTelemetry.ProductCacheHits.Add(1);
+            // Check if the entity is already in cache before fetching
+            // GetByIdAsync uses NopEntityCacheDefaults.ByIdCacheKey as the key pattern
+            var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopEntityCacheDefaults<Product>.ByIdCacheKey, productId);
+            var cachedProduct = await _staticCacheManager.GetAsync<Product>(cacheKey, default(Product));
+            var isCacheHit = cachedProduct != null;
+
+            var product = await _productRepository.GetByIdAsync(productId);
+
+            if (isCacheHit) NopTelemetry.ProductCacheHits.Add(1);
+            else NopTelemetry.ProductCacheMisses.Add(1);
 
             if (product == null)
             {

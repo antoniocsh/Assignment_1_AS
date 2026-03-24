@@ -69,6 +69,15 @@ public partial class Program
                         .AddService("nopcommerce", serviceVersion: "1.0.0"))
                 .AddAspNetCoreInstrumentation()
                 .AddMeter("NopCommerce.Metrics")
+                // Force explicit (classic) bucket histograms so Prometheus gets _bucket series.
+                // Without this, OTel .NET SDK exports Exponential Histograms by default,
+                // which have no _bucket suffix and break histogram_quantile() in Grafana.
+                .AddView(
+                    instrumentName: "nopcommerce.catalog.search_duration",
+                    metricStreamConfiguration: new ExplicitBucketHistogramConfiguration
+                    {
+                        Boundaries = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000]
+                    })
                 .AddOtlpExporter(opts =>
                 {
                     opts.Endpoint = new Uri("http://otel-collector:4317");
