@@ -558,8 +558,18 @@ public partial class ProductService : IProductService
 
         try 
         {
-            var product = await _productRepository.GetByIdAsync(productId, cache => default);
+            // Simple cache instrumentation
+            var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopCatalogDefaults.ProductCategoriesByProductCacheKey, productId, false, 0, 0);
+            bool isMiss = false;
+            var product = await _productRepository.GetByIdAsync(productId, cache => 
+            {
+                isMiss = true;
+                return default;
+            });
             
+            if (isMiss) NopTelemetry.ProductCacheMisses.Add(1);
+            else NopTelemetry.ProductCacheHits.Add(1);
+
             if (product == null)
             {
                 NopTelemetry.ProductNotFoundCount.Add(1, new KeyValuePair<string, object>("product.id", productId));

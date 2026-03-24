@@ -71,8 +71,8 @@ public partial class Program
                 .AddMeter("NopCommerce.Metrics")
                 .AddOtlpExporter(opts =>
                 {
-                    opts.Endpoint = new Uri("http://otel-collector:4318/v1/metrics");
-                    opts.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    opts.Endpoint = new Uri("http://otel-collector:4317");
+                    opts.Protocol = OtlpExportProtocol.Grpc;
                 }));
         // ── End OpenTelemetry ─────────────────────────────────────────────────
 

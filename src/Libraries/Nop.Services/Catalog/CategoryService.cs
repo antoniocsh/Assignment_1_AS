@@ -1,4 +1,4 @@
-﻿using Nop.Core;
+using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
@@ -241,8 +241,16 @@ public partial class CategoryService : ICategoryService
             await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync()),
             showHidden);
 
+        bool isMiss = false;
         var categories = await _staticCacheManager
-            .GetAsync(key, async () => (await GetAllCategoriesAsync(string.Empty, storeId, showHidden: showHidden)).ToList());
+            .GetAsync(key, async () => 
+            {
+                isMiss = true;
+                return (await GetAllCategoriesAsync(string.Empty, storeId, showHidden: showHidden)).ToList();
+            });
+
+        if (isMiss) NopTelemetry.ProductCacheMisses.Add(1);
+        else NopTelemetry.ProductCacheHits.Add(1);
 
         return categories;
     }

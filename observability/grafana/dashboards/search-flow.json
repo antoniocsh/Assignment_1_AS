@@ -128,7 +128,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(nopcommerce_catalog_search_duration_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(nopcommerce_catalog_search_duration_bucket{job=\"nopcommerce\"}[5m])) by (le))",
           "legendFormat": "p95 Search Latency",
           "range": true,
           "refId": "A"
@@ -216,7 +216,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(nopcommerce_catalog_product_not_found_count_total[5m]))",
+          "expr": "sum(rate(nopcommerce_catalog_product_not_found_count_total{job=\"nopcommerce\"}[5m]))",
           "legendFormat": "Product Not Found Rate",
           "range": true,
           "refId": "A"
@@ -281,7 +281,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m])) * 100",
+          "expr": "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\",job=\"otel-collector\"}[5m])) / sum(rate(http_server_request_duration_seconds_count{job=\"otel-collector\"}[5m])) * 100",
           "legendFormat": "Error Rate %",
           "range": true,
           "refId": "A"
@@ -289,6 +289,73 @@
       ],
       "title": "Overall HTTP Error Rate",
       "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 5,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(nopcommerce_catalog_cache_hits_count_total{job=\"otel-collector\"}[5m]))",
+          "legendFormat": "Hits",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(nopcommerce_catalog_cache_misses_count_total{job=\"otel-collector\"}[5m]))",
+          "legendFormat": "Misses",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Product Cache Activity",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 6,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(nopcommerce_catalog_cache_hits_count_total{job=\"otel-collector\"}[5m])) / (sum(rate(nopcommerce_catalog_cache_hits_count_total{job=\"otel-collector\"}[5m])) + sum(rate(nopcommerce_catalog_cache_misses_count_total{job=\"otel-collector\"}[5m]))) * 100",
+          "legendFormat": "Hit Rate %",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Cache Hit Ratio",
+      "type": "gauge"
     }
   ],
   "refresh": "5s",
