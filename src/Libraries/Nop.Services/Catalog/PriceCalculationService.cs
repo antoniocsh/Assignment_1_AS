@@ -361,11 +361,8 @@ public partial class PriceCalculationService : IPriceCalculationService
             if (!_catalogSettings.CacheProductPrices || product.IsRental)
                 cacheKey.CacheTime = 0;
 
-            var isMiss = false;
             var (rezPriceWithoutDiscount, rezPrice, discountAmount, appliedDiscounts) = await _staticCacheManager.GetAsync(cacheKey, async () =>
             {
-                isMiss = true;
-                NopTelemetry.ProductCacheMisses.Add(1, new KeyValuePair<string, object>("product.id", product.Id));
                 var discounts = new List<Discount>();
                 var appliedDiscountAmount = decimal.Zero;
 
@@ -405,11 +402,6 @@ public partial class PriceCalculationService : IPriceCalculationService
 
                 return (priceWithoutDiscount, price, appliedDiscountAmount, discounts);
             });
-
-            if (!isMiss)
-            {
-                NopTelemetry.ProductCacheHits.Add(1, new KeyValuePair<string, object>("product.id", product.Id));
-            }
 
             return (rezPriceWithoutDiscount, rezPrice, discountAmount, appliedDiscounts);
         }

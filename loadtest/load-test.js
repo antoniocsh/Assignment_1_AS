@@ -3,8 +3,8 @@ import { check, sleep } from 'k6';
 
 export const options = {
     stages: [
-        { duration: '30s', target: 15 }, // Ramp-up to 5 users
-        { duration: '1m', target: 25 },  // Stay at 5 users for 1 minute
+        { duration: '30s', target: 25 }, // Ramp-up to 25 users
+        { duration: '1m', target: 25 },  // Stay at 25 users for 1 minute
         { duration: '30s', target: 0 }, // Ramp-down to 0
     ],
     thresholds: {
@@ -43,7 +43,7 @@ export default function () {
     res = http.get(`${BASE_URL}/${randomSlug}`);
     check(res, { 'product page loaded': (r) => r.status === 200 });
 
-    // 4. Trigger a 404 (for the Product Discovery Failures panel)
+    // 4. Go to non existent product
     // if (Math.random() > 0.8) {
     //     res = http.get(`${BASE_URL}/non-existent-999`);
     //     check(res, { 'is status 404': (r) => r.status === 404 });

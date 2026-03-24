@@ -35,12 +35,22 @@
       },
       "id": 1,
       "options": {
-        "footer": { "enablePagination": true },
-        "sortBy": [{ "displayName": "Start time", "desc": true }]
+        "footer": {
+          "enablePagination": true
+        },
+        "sortBy": [
+          {
+            "displayName": "Start time",
+            "desc": true
+          }
+        ]
       },
       "targets": [
         {
-          "datasource": { "type": "jaeger", "uid": "jaeger" },
+          "datasource": {
+            "type": "jaeger",
+            "uid": "jaeger"
+          },
           "queryType": "search",
           "service": "nopcommerce",
           "operation": "Search",
@@ -63,12 +73,22 @@
       },
       "id": 7,
       "options": {
-        "footer": { "enablePagination": true },
-        "sortBy": [{ "displayName": "Start time", "desc": true }]
+        "footer": {
+          "enablePagination": true
+        },
+        "sortBy": [
+          {
+            "displayName": "Start time",
+            "desc": true
+          }
+        ]
       },
       "targets": [
         {
-          "datasource": { "type": "jaeger", "uid": "jaeger" },
+          "datasource": {
+            "type": "jaeger",
+            "uid": "jaeger"
+          },
           "queryType": "search",
           "service": "nopcommerce",
           "operation": "ProductDetails",
@@ -285,8 +305,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
-        "x": 0,
+        "w": 12,
+        "x": 12,
         "y": 16
       },
       "id": 4,
@@ -329,7 +349,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 16
       },
       "id": 5,
       "targets": [
@@ -339,7 +359,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(nopcommerce_catalog_cache_hits_count_total{job=\"otel-collector\"}[5m]))",
+          "expr": "sum(increase(nopcommerce_catalog_cache_hits_count_total{job=\"otel-collector\"}[1m]))",
           "legendFormat": "Hits",
           "range": true,
           "refId": "A"
@@ -350,7 +370,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(nopcommerce_catalog_cache_misses_count_total{job=\"otel-collector\"}[5m]))",
+          "expr": "sum(increase(nopcommerce_catalog_cache_misses_count_total{job=\"otel-collector\"}[1m]))",
           "legendFormat": "Misses",
           "range": true,
           "refId": "B"
@@ -358,34 +378,6 @@
       ],
       "title": "Product Cache Activity",
       "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 24
-      },
-      "id": 6,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "sum(rate(nopcommerce_catalog_cache_hits_count_total{job=\"otel-collector\"}[5m])) / (sum(rate(nopcommerce_catalog_cache_hits_count_total{job=\"otel-collector\"}[5m])) + sum(rate(nopcommerce_catalog_cache_misses_count_total{job=\"otel-collector\"}[5m]))) * 100",
-          "legendFormat": "Hit Rate %",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Cache Hit Ratio",
-      "type": "gauge"
     }
   ],
   "refresh": "5s",
@@ -399,7 +391,7 @@
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {},

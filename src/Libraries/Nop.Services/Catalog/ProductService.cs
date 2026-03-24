@@ -593,7 +593,30 @@ public partial class ProductService : IProductService
     /// </returns>
     public virtual async Task<IList<Product>> GetProductsByIdsAsync(int[] productIds)
     {
-        return await _productRepository.GetByIdsAsync(productIds, cache => default, false);
+        if (productIds == null || productIds.Length == 0) return new List<Product>();
+
+        using var activity = NopTelemetry.Source.StartActivity("GetProductsByIdsAsync");
+        activity?.SetTag("product.ids", string.Join(",", productIds));
+
+        try 
+        {
+            // Check if the set of IDs is already in the bulk cache key
+            var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopEntityCacheDefaults<Product>.ByIdsCacheKey, string.Join(",", productIds));
+            var cachedProducts = await _staticCacheManager.GetAsync<IList<Product>>(cacheKey, default(IList<Product>));
+            var isCacheHit = cachedProducts != null && cachedProducts.Count > 0;
+
+            var products = await _productRepository.GetByIdsAsync(productIds, cache => default, false);
+
+            if (isCacheHit) NopTelemetry.ProductCacheHits.Add(1);
+            else NopTelemetry.ProductCacheMisses.Add(1);
+
+            return products;
+        }
+        catch (Exception ex)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            throw;
+        }
     }
 
     /// <summary>
