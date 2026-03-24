@@ -1,0 +1,1 @@
+docker run --rm --add-host=host.docker.internal:host-gateway -i grafana/k6 run - < loadtest/load-test.js
