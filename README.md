@@ -1,22 +1,36 @@
 ﻿﻿How to run:
 Make sure you have docker and docker compose installed, then:
 
+```
 docker compose up --build
+```
 
-go to http://localhost
+Go to http://localhost
 
-setup the store with an admin, and in the database section put:
+Setup the store with an admin, and in the database section put:
 
+```
 server name: nopcommerce_database
 db name: nopcommerce
 username: sa
 password: nopCommerce_db_password
+```
 
-then wait a bit for the installation, do docker compose down and then docker compose up again
+Then wait some time (~ 2min) for the installation, stop the containers (Ctrl + C), and then again.
 
-then, go to http://localhost:3001 and there is the grafana dashboard
+```
+docker compose up
+```
 
-use the search feature in http://localhost and then check the dashboard.
+Grafana:
+
+Go to http://localhost:3001 and there is the Grafana dashboard.
+
+Use the search feature and go to product's pages in http://localhost and then check the dashboard.
+
+Jaeger:
+
+Go to http://localhost:16686/ to see jaeger traces.
 
 To run the load tests:
 
