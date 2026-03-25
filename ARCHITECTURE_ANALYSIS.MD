@@ -5,7 +5,7 @@ nopCommerce follows an Layered Architecture with a strict top-down dependency fl
 *   **Nop.Core**: The lowest layer. Contains domain entities and core interfaces. It has no dependencies on other project layers.
 *   **Nop.Data**: Infrastructure layer. Handles database access (via LinqToDB). It depends only on `Nop.Core`.
 *   **Nop.Services**: Business logic. Implements the services (e.g., `ProductService`). It depends on `Nop.Core` and `Nop.Data`.
-*   **Nop.Web**: The entry point (UI/Controllers). It depends on all other layers to orchestrate the application.
+*   **Nop.Web**: The entry point (UI/Controllers). It depends on all other layers.
 
 ### How does nopCommerce handle events internally - what is IEventPublisher and how is it used?
 NopCommerce uses an In-Memory Event System for decoupling:
