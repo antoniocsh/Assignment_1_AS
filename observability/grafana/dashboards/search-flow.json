@@ -360,7 +360,7 @@
           },
           "editorMode": "code",
           "expr": "sum(increase(nopcommerce_catalog_cache_hits_count_total{job=\"otel-collector\"}[1m]))",
-          "legendFormat": "Hits",
+          "legendFormat": "Misses",
           "range": true,
           "refId": "A"
         },
@@ -371,7 +371,7 @@
           },
           "editorMode": "code",
           "expr": "sum(increase(nopcommerce_catalog_cache_misses_count_total{job=\"otel-collector\"}[1m]))",
-          "legendFormat": "Misses",
+          "legendFormat": "Hits",
           "range": true,
           "refId": "B"
         }
